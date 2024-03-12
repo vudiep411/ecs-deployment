@@ -2,7 +2,7 @@
     "family": "{TASK_DEFINITION_NAME}",
     "containerDefinitions": [
       {
-        "name": "express-app",
+        "name": "{APP_NAME}",
         "image": "{IMAGE_URL}",
         "cpu": 0.5,
         "memory": 512,

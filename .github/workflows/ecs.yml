@@ -66,6 +66,22 @@ jobs:
               fi
               aws logs put-retention-policy --log-group-name /aws/ecs/${{ env.APP_NAME }} --retention-in-days ${{ env.LOG_RETENTION }}
 
+          - name: prepare task definition
+            run: |
+              sed -i -e 's;{TASK_DEFINITION_NAME};${{env.APP_NAME}};g' ./integration/task-definition.json
+              sed -i -e 's;{APP_NAME};${{env.APP_NAME}};g' ./integration/task-definition.json
+              sed -i -e 's;{LOG_GROUP_NAME};${{env.APP_NAME}};g' ./integration/task-definition.json
+              sed -i -e 's;{IMAGE_URL};${{env.IMAGE_URL}};g' ./integration/task-definition.json
+              sed -i -e 's;{PORT};${{env.PORT}};g' ./integration/task-definition.json
+              sed -i -e 's;{PASSWORD};${{env.PASSWORD}};g' ./integration/task-definition.json
+              sed -i -e 's;{USER};${{env.USER}};g' ./integration/task-definition.json
+              sed -i -e 's;{SECRET};${{env.SECRET}};g' ./integration/task-definition.json
+              sed -i -e 's;{LOG_GROUP_REGION};${{env.AWS_REGION}};g' ./integration/task-definition.json
+              sed -i -e 's;{CONTAINER_CPU};${{env.CONTAINER_CPU}};g' ./integration/task-definition.json
+              sed -i -e 's;{CONTAINER_MEMORY};${{env.CONTAINER_MEMORY}};g' ./integration/task-definition.json
+              sed -i -e 's;{TASK_EXECUTION_ROLE};${{env.EXECUTION_ROLE}};g' ./integration/task-definition.json
+              sed -i -e 's;{TASK_ROLE};${{env.TASK_ROLE}};g' ./integration/task-definition.json
+              
           - name: Render Amazon ECS task definition
             id: render-task-definition
             uses: aws-actions/amazon-ecs-render-task-definition@v1
