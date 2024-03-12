@@ -4,8 +4,8 @@
       {
         "name": "{APP_NAME}",
         "image": "{IMAGE_URL}",
-        "cpu": 0.5,
-        "memory": 512,
+        "cpu": "{CONTAINER_CPU}",
+        "memory": "{CONTAINER_MEMORY}",
         "essential": true,
         "environment": [
             {
