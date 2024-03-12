@@ -12,6 +12,4 @@ COPY . .
 
 EXPOSE 5001
 
-COPY .env .env
-
 CMD ["npm", "start"]
