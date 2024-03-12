@@ -1,11 +1,6 @@
 name: Conditional checks
 on:
   workflow_call:
-    inputs:
-      GITHUB_ENVIRONMENT:
-        required: true
-        type: string
-
     outputs:
       docker_changed:
         description: "condtional job file check for docker image path"
@@ -19,13 +14,12 @@ jobs:
   conditional-job-check-files:
     name: condtional-file-checks
     runs-on: 'ubuntu-latest'
-    environment: ${{ inputs.GITHUB_ENVIRONMENT }}
     # Declare outputs for environment vars set in Powershell step
     outputs:
       docker_changed: ${{ env.docker_changed }}    # database file changes
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         # Checkout as many commits as needed for the diff
         fetch-depth: 2
