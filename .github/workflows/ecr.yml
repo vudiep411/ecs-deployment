@@ -32,6 +32,17 @@ jobs:
           cd auth
           docker login --username AWS -p $(aws ecr get-login-password --region ${{ env.AWS_REGION }}) ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
 
+      - name: Check if ECR repository exists
+        id: check_repo
+        run: |
+          aws ecr describe-repositories --repository-names ${{ env.IMAGE_NAME }} --region ${{ env.AWS_REGION }} || exit 0
+          exit 1
+
+      - name: Create ECR repository
+        if: steps.check_repo.outcome == 'failure'
+        run: |
+          aws ecr create-repository --repository-name ${{ env.IMAGE_NAME }} --region ${{ env.AWS_REGION }}    
+          
       - name: Build Docker Image
         run: |
           cd auth
