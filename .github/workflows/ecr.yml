@@ -29,16 +29,20 @@ jobs:
         
       - name: Login to AWS ECR
         run: |
+          cd auth
           docker login --username AWS -p $(aws ecr get-login-password --region ${{ env.AWS_REGION }}) ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
 
       - name: Build Docker Image
         run: |
+          cd auth
           docker build -t ${{ env.IMAGE_NAME }} .
 
       - name: Tag Docker Image
         run: |
+          cd auth
           docker tag ${{ env.IMAGE_NAME }}:latest ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.IMAGE_NAME }}:latest
 
       - name: Push Docker Image to ECR
         run: |
+          cd auth
           docker push ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.IMAGE_NAME }}:latest
