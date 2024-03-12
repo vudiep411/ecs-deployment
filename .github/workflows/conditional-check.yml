@@ -1,0 +1,43 @@
+name: Conditional checks
+on:
+  workflow_call:
+    inputs:
+      GITHUB_ENVIRONMENT:
+        required: true
+        type: string
+
+    outputs:
+      docker_changed:
+        description: "condtional job file check for docker image path"
+        value: ${{ jobs.conditional-job-check-files.outputs.db_changed }}
+
+permissions:
+  id-token: write
+  contents: read    # This is required for actions/checkout@v2
+
+jobs:
+  conditional-job-check-files:
+    name: condtional-file-checks
+    runs-on: 'ubuntu-latest'
+    environment: ${{ inputs.GITHUB_ENVIRONMENT }}
+    # Declare outputs for environment vars set in Powershell step
+    outputs:
+      docker_changed: ${{ env.docker_changed }}    # database file changes
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        # Checkout as many commits as needed for the diff
+        fetch-depth: 2
+    - shell: pwsh
+      id: check_file_changed
+      run: |
+        # Diff HEAD with the previous commit
+        $diff = git diff --name-only HEAD^ HEAD
+
+        # Check if a file under docs/ or with the .md extension has changed (added, modified, deleted)
+        $DKDiff = $diff | Where-Object { $_ -match '^auth' -or $_ -match '.md$' }
+        $HasDKDiff = $DKDiff.Length -gt 0
+
+        # Set the output to environment variables 
+        echo "docker_changed=$HasDKDiff" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append

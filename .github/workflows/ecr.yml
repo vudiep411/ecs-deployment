@@ -9,8 +9,13 @@ permissions:
   contents: read
 
 jobs:
+  conditional-job-check-files:
+    uses: ./.github/workflows/conditional-check.yml
+
   deploy-to-aws-ecr:
     runs-on: ubuntu-latest
+    needs: [ conditional-job-check-files]
+    if: needs.conditional-job-check-files.outputs.docker_changed == 'True'
     env:
       ROLE_TO_ASSUME: ${{ secrets.AWS_GITHUB_ACTION_ROLE }}
       ROLE_SESSION_NAME: CI-DEV
