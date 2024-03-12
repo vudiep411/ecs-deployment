@@ -120,4 +120,4 @@ jobs:
           - name: Start The Service
             if: env.ACTION != 'DELETE'
             run: |
-              aws ecs run-task --cluster ${{ env.ECS_CLUSTER_NAME }} --task-definition ${{ steps.deploy-task-definition.outputs.task-definition-arn }} --count 1 --launch-type FARGATE --network-configuration "awsvpcConfiguration={securityGroups=[${{ env.DEFAULT_SECURITY_GROUP_ID }}],assignPublicIp=DISABLED}"
+              aws ecs run-task --cluster ${{ env.ECS_CLUSTER_NAME }} --task-definition ${{ steps.deploy-task-definition.outputs.task-definition-arn }} --count 1 --launch-type FARGATE --network-configuration "awsvpcConfiguration={subnets=[${{ env.PRIVATE_SUBNET_IDS }}], securityGroups=[${{ env.DEFAULT_SECURITY_GROUP_ID }}],assignPublicIp=DISABLED}"
