@@ -31,8 +31,8 @@ jobs:
             LOG_RETENTION: 30
             ACTION: CREATE
             ECS_CLUSTER_NAME: auth-service-cluster
-            DEFAULT_SECURITY_GROUP_ID: sg-0de460927e5676cf7
-            PRIVATE_SUBNET_IDS: sg-0b1b6dc1f9ca096d9
+            DEFAULT_SECURITY_GROUP_ID: sg-0b1b6dc1f9ca096d9
+            PRIVATE_SUBNET_IDS: subnet-00486a92c9f27b694
         steps:
           - name: Checkout
             uses: actions/checkout@v3
