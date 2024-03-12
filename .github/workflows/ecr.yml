@@ -38,6 +38,7 @@ jobs:
             echo "Repo already created"
           else
             aws ecr create-repository --repository-name ${{ env.IMAGE_NAME }} --region ${{ env.AWS_REGION }}    
+          fi
 
       - name: Build Docker Image
         run: |
