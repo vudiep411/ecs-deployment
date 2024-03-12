@@ -1,0 +1,107 @@
+name: Deploy Service on ECS
+on:
+  push:
+    branches:
+      - "main"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+    deploy-service-ecs:
+        runs-on: ubuntu-latest
+        # needs: [ conditional-job-check-files]
+        # if: needs.conditional-job-check-files.outputs.docker_changed == 'True'
+        env:
+            ROLE_TO_ASSUME: ${{ secrets.AWS_GITHUB_ACTION_ROLE }}
+            ROLE_SESSION_NAME: CI-DEV
+            AWS_REGION: us-west-1
+            PORT: 5001
+            HOST: ${{ secrets.HOST }}
+            PASSWORD: ${{ secrets.PASSWORD }}
+            USER: ${{ secrets.USER }}
+            SECRET: ${{ secrets.SECRET }}
+            EXECUTION_ROLE: arn:aws:iam::880376431437:role/ecsTaskExecutionRole
+            TASK_ROLE: arn:aws:iam::880376431437:role/ecsTaskExecutionRole
+            CONTAINER_CPU: 512
+            CONTAINER_MEMORY: 1024
+            IMAGE_URL: 880376431437.dkr.ecr.us-west-1.amazonaws.com/auth:latest
+            APP_NAME: auth
+            LOG_RETENTION: 30
+            ACTION: CREATE
+            ECS_CLUSTER_NAME: auth-service-cluster
+            DEFAULT_SECURITY_GROUP_ID: sg-0de460927e5676cf7
+            PRIVATE_SUBNET_IDS: sg-0b1b6dc1f9ca096d9
+        steps:
+          - name: Checkout
+            uses: actions/checkout@v3
+
+          - name: Configure AWS Credentials
+            uses: aws-actions/configure-aws-credentials@v1.7.0
+            with:
+              role-to-assume: ${{ env.ROLE_TO_ASSUME }}
+              role-session-name: ${{ env.ROLE_SESSION_NAME }}
+              aws-region: ${{ env.AWS_REGION }}
+
+          - name: List Log Groups With Prefix
+            id: list-log-groups
+            run: |
+              aws logs describe-log-groups --log-group-name-prefix /aws/ecs/${{ env.APP_NAME }} --query 'logGroups[].logGroupName' --output json > log-groups.json
+        
+          - name: Check Log Group Existence
+            id: check-log-group
+            run: |
+              if jq -r '.[] | select(. == "/aws/ecs/${{ env.APP_NAME }}")' log-groups.json | grep -q "/aws/ecs/${{ env.APP_NAME }}"; then
+                echo "::set-output name=log_group_exists::true"
+              else
+                echo "::set-output name=log_group_exists::false"
+              fi
+              cat log-groups.json
+          
+          - name: Create AWS Log Group
+            run: |
+              if [ "${{ steps.check-log-group.outputs.log_group_exists }}" == "false" ]; then
+                aws logs create-log-group --log-group-name /aws/ecs/${{ env.APP_NAME }}
+              fi
+              aws logs put-retention-policy --log-group-name /aws/ecs/${{ env.APP_NAME }} --retention-in-days ${{ env.LOG_RETENTION }}
+
+          - name: Render Amazon ECS task definition
+            id: render-task-definition
+            uses: aws-actions/amazon-ecs-render-task-definition@v1
+            with:
+              task-definition: ./integration/task-definition.json
+              container-name: ${{ env.APP_NAME }}
+              image: ${{ env.IMAGE_URL }}
+
+          - name: De-registering All Task Definitions To Deploy Latest
+            if: env.ACTION == 'DELETE'
+            run: |
+              # List all task definitions
+              task_defs=$(aws ecs list-task-definitions --query 'taskDefinitionArns' --output json)
+              # Filter task definitions by name
+              exact_task_defs=()
+              for task_def in $(echo "${task_defs}" | jq -r '.[]'); do
+                if [[ "${task_def}" == *"${{ env.APP_NAME }}"* ]]; then
+                  exact_task_defs+=("${task_def}")
+                fi
+              done
+              # Print the filtered task definitions
+              for exact_task_def in "${exact_task_defs[@]}"; do
+                echo "De-registering the Task Definition: ${exact_task_def}"
+                aws ecs deregister-task-definition --task-definition $exact_task_def
+              done
+            shell: bash
+
+          - name: Deploy to Amazon ECS service
+            if: (env.ACTION != 'DELETE')
+            id: deploy-task-definition
+            uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+            with:
+              task-definition: ${{ steps.render-task-definition.outputs.task-definition }}
+              cluster: ${{ env.ECS_CLUSTER_NAME }}
+
+          - name: Start The Service
+            if: env.ACTION != 'DELETE'
+            run: |
+              aws ecs run-task --cluster ${{ env.ECS_CLUSTER_NAME }} --task-definition ${{ steps.deploy-task-definition.outputs.task-definition-arn }} --count 1 --launch-type FARGATE --network-configuration "awsvpcConfiguration={subnets=[${{ env.PRIVATE_SUBNET_IDS }}],securityGroups=[${{ env.DEFAULT_SECURITY_GROUP_ID }}],assignPublicIp=DISABLED}"

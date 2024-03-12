@@ -1,0 +1,56 @@
+{
+    "family": "{TASK_DEFINITION_NAME}",
+    "containerDefinitions": [
+      {
+        "name": "express-app",
+        "image": "{IMAGE_URL}",
+        "cpu": 0.5,
+        "memory": 512,
+        "essential": true,
+        "environment": [
+            {
+                "name": "PORT",
+                "value": "{PORT}"
+            },
+            {
+                "name": "HOST",
+                "value": "{HOST}"
+            },
+            {
+                "name": "PASSWORD",
+                "value": "{PASSWORD}"
+            },
+            {
+                "name": "USER",
+                "value": "{USER}"
+            },
+            {
+                "name": "SECRET",
+                "value": "{SECRET}"
+            }
+        ],
+        "portMappings": [
+          {
+            "containerPort": "{PORT}",
+            "hostPort": "{PORT}"
+          }
+        ],
+        "logConfiguration": {
+          "logDriver": "awslogs",
+          "options": {
+            "awslogs-group": "{LOG_GROUP_NAME}",
+            "awslogs-region": "{LOG_GROUP_REGION}",
+            "awslogs-stream-prefix": "container"
+          }
+        }
+      }
+    ],
+    "networkMode": "awsvpc",
+    "requiresCompatibilities": [
+      "FARGATE"
+    ],
+    "cpu": "{CONTAINER_CPU}",
+    "memory": "{CONTAINER_MEMORY}",
+    "executionRoleArn": "{TASK_EXECUTION_ROLE}",
+    "taskRoleArn": "{TASK_ROLE}"
+  }
