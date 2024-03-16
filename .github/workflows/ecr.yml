@@ -20,7 +20,7 @@ jobs:
       ROLE_TO_ASSUME: ${{ secrets.AWS_GITHUB_ACTION_ROLE }}
       ROLE_SESSION_NAME: CI-DEV
       AWS_REGION: us-west-1
-      AWS_ACCOUNT_ID: 880376431437
+      AWS_ACCOUNT_ID: 658825739119
       IMAGE_NAME: auth
     steps:
       - uses: actions/checkout@v3
